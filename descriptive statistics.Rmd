@@ -1,0 +1,57 @@
+---
+title: "descriptive statistics"
+author: "Jessica Spencer"
+date: "2/25/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("cleaning_for_numerics.R")
+```
+
+```{r}
+make_plots =  function(dat,breakdown){
+  for (col in dat){
+    #mfrow=c(2,1)
+  #  print(col)
+    title_1 = paste(names(col), " for All Participants")
+    ggplot(clean_dat, aes(x=col)) + geom_histogram(binwidth = 1,color="darkblue", fill="lightblue") + xlim(1930, 2005) +ggtitle(title_1) + xlab(col)
+  title_2 = col+"by" + breakdown
+  ggplot(clean_dat, aes(x=col, color=breakdown, fill=bucketed_gender)) + geom_histogram(binwidth = 1,position="dodge", alpha=0.5) + xlim(1930, 2005) +ggtitle(title_2) + xlab(col)+theme(legend.position="top")
+  }
+}
+```
+
+##Descriptive Statistics
+
+```{r}
+#age stuff
+#View(clean_dat)
+clean_dat$yob = strtoi(clean_dat$birth.year)
+#View(clean_dat$yob)
+ggplot(clean_dat, aes(x=yob)) + geom_histogram(binwidth = 1,color="darkblue", fill="lightblue") + xlim(1930, 2005) +ggtitle("Year of Birth for All Participants") + xlab("Year of Birth")
+
+ggplot(clean_dat, aes(x=yob, color=bucketed_gender, fill=bucketed_gender)) + geom_histogram(binwidth = 1,position="dodge", alpha=0.5) + xlim(1930, 2005) +ggtitle("Year of Birth by Gender for Participants") + xlab("Year of Birth")+theme(legend.position="top")
+
+ggplot(clean_dat, aes(x=yob, color=bucketed_gender, fill=bucketed_gender)) + geom_histogram(binwidth = 1,position="dodge", alpha=0.5) + xlim(1930, 2005) +ggtitle("Year of Birth by Gender for Participants") + xlab("Year of Birth")+theme(legend.position="top")
+
+```
+
+
+```{r}
+ggplot(clean_dat, aes(x=age)) + geom_histogram(binwidth = 1,color="darkblue", fill="lightblue") + xlim(15, 90) +ggtitle("Age for All Participants") + xlab("Age")
+ggplot(clean_dat, aes(x=main.chair)) + geom_histogram(binwidth = 1,color="darkblue", fill="lightblue") + xlim(0, 50) +ggtitle("Number of Main Chair Tours for All Participants") + xlab("Number")
+```
+
+```{r}
+library(Amelia)
+library(mlbench)
+missmap(clean_dat, col=c("blue", "red"), legend=FALSE)
+```
+
+Instrument Breakdown
+```{r}
+ins = poi %>% group_by(violin,viola) %>% summarize(count = n())
+ins
+```

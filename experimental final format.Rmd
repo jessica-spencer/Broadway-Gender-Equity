@@ -1,0 +1,135 @@
+---
+title: "Chi Squared Analysis Against Gender"
+author: "Jessica Spencer"
+date: "8/18/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+source("cleaning_for_numerics.R")
+library(ggplot2)
+
+make_barchart = function(tab,title){
+  prop_tab = ftable(round(prop.table(tab,2)*100, 3))
+  ggplot(data=screencast, aes(x=Reason,y=Percentage,fill=factor(Type))) +
+  geom_bar(position="dodge",stat="identity") + 
+  coord_flip() +
+  ggtitle("Replace Title")
+}
+
+get_sig = function(df){
+  sig = c()
+  insig = c()
+  for(col in 1:ncol(df)){
+    table = table(df[,col],df$bucketed_gender)
+    #print(table)
+    #rownames(table)=c("Yes","No")
+    #title = paste(colnames(df)[col],"with Gender")
+    cont_tab = ftable(table)
+    chi = chisq.test(table,simulate.p.value=TRUE)
+    
+    if(chi$p.value<0.05){
+      #add to list of significant results
+      sig = append(sig,col)
+    }
+  }
+  return(sig)
+}
+
+make_table_chi_df = function(df){
+  for(col in 1:ncol(df)){
+    table = table(df[,col],df$bucketed_gender)
+    title = paste(colnames(df)[col],"with Gender")
+    make_table_chi(table, title)
+  }
+}
+
+make_table_chi = function(tab,title){
+  cont_tab = ftable(tab)
+  prop_tab = ftable(round(prop.table(tab,2)*100, 3))
+  chi = chisq.test(tab,simulate.p.value=TRUE)
+  #if chi^2 is sig, then print the results
+  if(chi$p.value < 0.05){
+    print(title)
+    print("Contingency Table")
+    print(cont_tab)
+    print("Results in Percent of Participants")
+    print(prop_tab)
+    print("Chi-Squared Test")
+    print(chisq.test(tab))
+  }
+  #else{
+    #print(paste(title," - No significant relationship was found"))
+    
+  #} 
+  
+}
+
+master_chi_instrument = function(colStart,colEnd,df,gender_column){
+  for(i in colStart:colEnd) {  
+   # print(names(df)[i])# for-loop over columns
+  #  print((length(unique(df[,i]))>1))
+    if(length(unique(df[,i]))>1){
+      g= table(df[,i],df$bucketed_gender)
+      rownames(g) = c("No","Yes")
+      title = paste( "Q: Do you play ", names(df)[i] ," at a professional level?")
+      val = make_table_chi(g, title)
+    }
+  }
+}
+```
+
+## Methods
+A Chi-Squared test was run against "bucketed gender" and all other independent variables.  Bucketed gender was created by combining transgender and nonbinary or gender non-conforming participants into one category labelled "transgender and nonbinary". This was done so that there would be enought datapoints in each category for a chi-squared test to be reliably performed.  Here are the counts for each category of bucketed gender:
+```{r}
+table(clean_dat$bucketed_gender)
+```
+
+## Significant Results
+
+The following variables were shown to have a significant relationship with gender.
+
+```{r}
+sig = get_sig(subset_cd)
+sig_subset = subset_cd[,sig]
+make_table_chi_df(sig_subset)
+```
+#Instrument Choice with Gender
+
+The following shows the instruments,that have some significant relationship with gender.Each of these instruments was tested individually against gender :
+
+piano, keyboard, flute,  clarinet, piccolo, oboe, trumpet, flugelhorn, saxaphone-write in, trombone, tuba, french horn, violin, viola, cello, acoustic bass, electric bass, acoustic guitar, electric guitar, harp, drums, percussion
+
+```{r}
+#For Instruments
+master_chi_instrument(colStart=31,colEnd=53,df=poi,gender_column="bucketed_gender")
+```
+
+#Instrument Families
+
+the following groupings were made and tested against bucketed gender. All were significant:
+
+Strings : violin, viola, acoustic bass, cello  
+
+
+Brass : trumpet, flugelhorn, trombone, tuba, frenchhorn
+
+
+Woodwinds: flute, clarinet, piccolo, oboe, saxophone  
+
+
+Rhythm: acoustic guitar, electric guitar, electric bass, drums, percussion  
+
+
+piano or keyboard  
+
+
+
+```{r}
+master_chi_instrument(colStart=54,colEnd=58,df=poi,gender_column="bucketed_gender")
+```
+
+
+

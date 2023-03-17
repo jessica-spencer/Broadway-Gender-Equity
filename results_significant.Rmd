@@ -1,0 +1,107 @@
+---
+title: "x2 significant results"
+author: "Jessica Spencer"
+date: "2/24/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("cleaning_for_numerics.R")
+#source("cleaning_for_numerics.R")
+#code to create table like in Qualtrics
+make_table = function(tab,title){
+  cont_tab = ftable(tab)
+  prop_tab = ftable(round(prop.table(tab)*100, 3))
+  #make this an IF to account for times where you can use Chi^2
+  fish_test_p = round(fisher.test(tab,simulate.p.value = TRUE, B = 10000)$p.value,4)
+  fish_row = c("Fisher's Exact Test Statistic: ",fish_test_p)
+  print(title)
+  print(cont_tab)
+  print(prop_tab)
+  fish_row
+}
+
+make_table_chi = function(tab,title){
+  cont_tab = ftable(tab)
+  prop_tab = ftable(round(prop.table(tab,2)*100, 3))
+  print(title)
+  print(paste("Contingency Table for ",title))
+  print(cont_tab)
+  print(paste("Contingency Table in Percent of Gender for ",title))
+  print(prop_tab)
+  print(chisq.test(tab))
+}
+
+master_chi_instrument = function(colStart,colEnd,df,gender_column){
+  for(i in colStart:colEnd) {       # for-loop over columns
+    if(length(unique(df[,i]))>1){
+       g= table(df[,i],df$bucketed_gender)
+      
+      rownames(g) = c("No","Yes")
+      title = paste( "Q: Do you play ", names(df)[i] ," at a professional level?")
+      make_table_chi(g, title)
+    }
+   
+  }
+}
+
+```
+
+#Gender and Tour History
+
+Q14: Are you currently touring or have you toured in the past?
+
+Is gender independent from tour history?
+
+```{r echo=FALSE}
+g_t.ever = table(clean_dat$tour.ever,clean_dat$bucketed_gender)
+rownames(g_t.ever)=c("Yes","No")
+make_table_chi(g_t.ever, "Q14: Are you currently touring or have you toured in the past?")
+```
+The Chi-Squared test generated a p-value less than 0.5, meaning that the null hypothesis can be rejected. There is a statistically significant relationship between gender and whether or not the participant is touring/has toured in the past.
+
+
+#Gender and Composer
+
+Q: Is gender independent from the decision to become a composer?
+
+```{r echo=FALSE}
+g_compose = table(clean_dat$composer,clean_dat$bucketed_gender) 
+rownames(g_compose)=c("Yes","No")
+make_table_chi(g_compose, "Q: Are you a composer?")
+```
+Yes.The Chi-Squared test generated a p-value less than 0.5, meaning that the null hypothesis can be rejected. There is a statistically significant relationship between gender and whether or not the participant is a composer.
+
+#Gender and Arranger
+```{r echo=FALSE}
+g_arrange = table(clean_dat$arranger,clean_dat$bucketed_gender) 
+rownames(g_arrange)=c("Yes","No")
+make_table_chi(g_arrange, "Q: Are you an arranger?")
+```
+Yes. The Chi-Squared test generated a p-value less than 0.05, meaning that the null hypothesis can be rejected. There is a statistically significant relationship between gender and whether or not the participant is an arranger.
+
+
+#Gender and Employment
+
+Is gender independent of currently playing in a community theater pit?
+```{r echo=FALSE}
+data_pit.currently$orig_gender = data_pit.currently$gender
+data_pit.currently$gender = data_pit.currently$bucketed_gender
+#View(data_pit.currently)
+po_2 = data_pit.currently %>% mutate(pit.currently = recode(pit.currently.x,"1"="broadway","2" = "broadway.touring","3"="non.union.touring","4"="regional.theater","5"="community.theater")) %>% 
+  mutate(yes_no = 1) %>%
+  distinct %>%
+  spread(pit.currently, yes_no, fill = 0)
+
+po2 = po_2[!duplicated(po_2$IPAddress),]
+
+```
+
+```{r echo=FALSE}
+#View(po2)
+g_poCom= table(po2$community.theater,po2$bucketed_gender)
+rownames(g_poCom) = c("No","Yes")
+make_table_chi(g_poCom, "Q: Are you currently in a community theater pit?")
+```
+
